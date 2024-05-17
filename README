@@ -1,0 +1,30 @@
+# NBA Game Highlights Extraction Using Computer Vision
+
+## Executive Summary
+The goal of this project is to explore unstructured data and computer vision. I will use a computer vision model to create features from video of NBA games.
+
+## Motivation
+I am fascinated with sports analytics and the ability of computer vision models to derive statistics about games and players that are not captured in traditional box scores.
+
+## Data Question
+Can I train a model that will be able to select highlights from NBA game footage or derive a new player stat from features extracted from the footage?
+
+## Minimum Viable Product (MVP)
+The MVP will involve tuning and training a model that can:
+- Take video of NBA games and extract the most important moments (highlights) from that video clip.
+- Extract a metric from the video data.
+
+## Schedule (through 6/13/2024)
+- **Get the Data**: [Finish date]
+- **Clean & Explore the Data**: [Finish date]
+- **Create Presentation**: [Finish date]
+- **Internal Demos**: 6/8/2024
+- **Demo Day**: 6/13/2024
+
+## Data Sources
+I am not yet sure where to get unedited game video.
+
+## Known Issues and Challenges
+Challenges include:
+- Finding enough high-quality videos.
+- Familiarizing myself with how to label unstructured data from video games so that I can train a model to recognize the features I’d like to output.
