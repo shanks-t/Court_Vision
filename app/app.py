@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import torch
 from ultralytics import YOLO
+import supervision as sv
 import yt_dlp
 import os
 import logging
@@ -26,6 +27,11 @@ device = 'mps' if torch.backends.mps.is_available() else 'cpu'
 model = YOLO(model_aug_path)
 model.model.to(device)
 
+# Initialize tracker and annotators
+tracker = sv.ByteTrack()
+box_annotator = sv.BoundingBoxAnnotator()
+label_annotator = sv.LabelAnnotator()
+
 # Download YouTube video function
 def download_youtube_video(url, output_path='downloaded_video.mp4'):
     ydl_opts = {
@@ -37,46 +43,27 @@ def download_youtube_video(url, output_path='downloaded_video.mp4'):
         ydl.download([url])
     logger.info(f"Downloaded video from URL: {url}")
 
-# Function to run inference on a video frame by frame
-def run_inference_on_video(video_path, conf_threshold, iou_threshold):
-    cap = cv2.VideoCapture(video_path)
-    if not cap.isOpened():
-        logger.error("Error: Could not open video.")
-        return
+# Callback function for processing video frames
+def callback(frame: np.ndarray, conf_threshold: float, iou_threshold: float) -> np.ndarray:
+    results = model(frame, device=device, conf=conf_threshold, iou=iou_threshold)[0]
+    detections = sv.Detections.from_ultralytics(results)
+    tracked_detections = tracker.update_with_detections(detections)
 
-    stframe = st.empty()
+    # Generate tracking labels
+    labels = [
+        f"{model.model.names[int(class_id)]} {confidence:.2f}"
+        for class_id, tracker_id, confidence in zip(tracked_detections.class_id, tracked_detections.tracker_id, tracked_detections.confidence)
+    ]
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
+    if len(labels) != len(detections):
+        logger.warning(f"The number of labels provided ({len(labels)}) does not match the number of detections ({len(detections)}).")
+        return frame
 
-        # Run inference on the frame
-        results = model.predict(
-            source=frame,
-            device=device,
-            conf=conf_threshold,
-            iou=iou_threshold,
-            imgsz=640
-        )
-
-        for result in results:
-            boxes = result.boxes.xyxy.cpu().numpy()
-            confidences = result.boxes.conf.cpu().numpy()
-            class_ids = result.boxes.cls.cpu().numpy().astype(int)
-
-            for box, conf, class_id in zip(boxes, confidences, class_ids):
-                x1, y1, x2, y2 = map(int, box)
-                label = model.model.names[class_id]
-                text = f'{label} {conf:.2f}'
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(frame, text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
-        # Display the frame
-        stframe.image(frame, channels="BGR")
-
-    cap.release()
-    cv2.destroyAllWindows()
+    # Annotate the frame with detections
+    annotated_frame = box_annotator.annotate(frame.copy(), detections=tracked_detections)
+    annotated_frame = label_annotator.annotate(annotated_frame, detections=tracked_detections, labels=labels)
+    
+    return annotated_frame
 
 # Streamlit app
 st.title("YOLOv8 YouTube Video Inference")
@@ -94,10 +81,23 @@ if st.button("Process Video"):
                 logger.error(f"Error downloading video: {e}")
                 st.error(f"Error downloading video: {e}")
 
-        if os.path.exists('downloaded_video.mp4'):
-            run_inference_on_video('downloaded_video.mp4', conf_threshold, iou_threshold)
-            os.remove('downloaded_video.mp4')
-            logger.info("Video processing completed.")
+        cap = cv2.VideoCapture('downloaded_video.mp4')
+
+        stframe = st.empty()
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            # Process frame for detections
+            annotated_frame = callback(frame, conf_threshold, iou_threshold)
+
+            # Display frame
+            stframe.image(annotated_frame, channels="BGR")
+
+        cap.release()
+        os.remove('downloaded_video.mp4')
+        logger.info("Video processing completed.")
     else:
         st.write("Please enter a valid YouTube URL.")
         logger.warning("No URL entered for video processing.")
