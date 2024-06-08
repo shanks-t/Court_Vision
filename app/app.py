@@ -24,6 +24,7 @@ model_aug_path = '/Users/treyshanks/data_science/Court_Vision/notebooks/lebron_a
 
 # Load YOLO model and set device
 device = 'mps' if torch.backends.mps.is_available() else 'cpu'
+# device= 'cpu'
 model = YOLO(model_aug_path)
 model.model.to(device)
 
