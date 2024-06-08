@@ -5,5 +5,6 @@ lebron_data/
 agg_lebron/
 results/
 __pycache__
-
+*.pth.*
+*.pth
 *.mp4
