@@ -9,22 +9,22 @@ I am fascinated with sports analytics and the ability of computer vision models 
 ## Data Question
 Can I train a model that will be able to select highlights from NBA game footage or derive a new player stat from features extracted from the footage?
 
-## Minimum Viable Product (MVP)
-The MVP will involve tuning and training a model that can:
-- Take video of NBA games and extract the most important moments (highlights) from that video clip.
-- Extract a metric from the video data.
+## Methods
+- fine-tuned pretrained yolov8 model with 3000 labels images of Lebron James playing basketball
+- Perform live inference from fine-tuned model on youtube videos via streamlit webapp running locally
 
-## Schedule (through 6/13/2024)
-- **Get the Data**: [Finish date]
-- **Clean & Explore the Data**: [Finish date]
-- **Create Presentation**: [Finish date]
-- **Internal Demos**: 6/8/2024
-- **Demo Day**: 6/13/2024
+## Tools
+- yolov8
+- google colab
+- streamlit
+- jupyter
+- cv2
+- pytorch
+- yt-dlp
+- supervision
 
-## Data Sources
-I am not yet sure where to get unedited game video.
-
-## Known Issues and Challenges
-Challenges include:
-- Finding enough high-quality videos.
-- Familiarizing myself with how to label unstructured data from video games so that I can train a model to recognize the features I’d like to output.
+## To run app
+- Recommended to create a python environment. I used conda. 
+- Install the above tools in your env
+- run `streamlit run app.py` in the app directory
+- once running, you can paste a youtube video url into the input and see the model perform live inference with confidence level annoations on your video
