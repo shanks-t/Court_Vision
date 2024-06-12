@@ -8,7 +8,7 @@ import yt_dlp
 import os
 import logging
 
-# Configure logging
+# configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -19,13 +19,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Paths
-model_aug_path = '/Users/treyshanks/data_science/Court_Vision/notebooks/lebron_aug_best.pt'
+model_path = '/Users/treyshanks/data_science/Court_Vision/models/lebron_aug_best.pt'
 
-# Load YOLO model and set device
+# load YOLO model and set device
 device = 'mps' if torch.backends.mps.is_available() else 'cpu'
 # device= 'cpu'
-model = YOLO(model_aug_path)
+model = YOLO(model_path)
 model.model.to(device)
 
 # Initialize tracker and annotators
@@ -45,8 +44,8 @@ def download_youtube_video(url, output_path='downloaded_video.mp4'):
     logger.info(f"Downloaded video from URL: {url}")
 
 # Callback function for processing video frames
-def callback(frame: np.ndarray, conf_threshold: float, iou_threshold: float) -> np.ndarray:
-    results = model(frame, device=device, conf=conf_threshold, iou=iou_threshold)[0]
+def callback(frame: np.ndarray, conf_threshold: float) -> np.ndarray:
+    results = model(frame, device=device, conf=conf_threshold)[0]
     detections = sv.Detections.from_ultralytics(results)
     tracked_detections = tracker.update_with_detections(detections)
 
@@ -71,7 +70,7 @@ st.title("YOLOv8 YouTube Video Inference")
 
 url = st.text_input("Enter YouTube URL:")
 conf_threshold = st.slider("Confidence Threshold", 0.0, 1.0, 0.5)
-iou_threshold = st.slider("IoU Threshold", 0.0, 1.0, 0.5)
+# iou_threshold = st.slider("IoU Threshold", 0.0, 1.0, 0.5)
 
 if st.button("Process Video"):
     if url:
@@ -91,7 +90,7 @@ if st.button("Process Video"):
                 break
 
             # Process frame for detections
-            annotated_frame = callback(frame, conf_threshold, iou_threshold)
+            annotated_frame = callback(frame, conf_threshold)
 
             # Display frame
             stframe.image(annotated_frame, channels="BGR")
